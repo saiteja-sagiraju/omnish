@@ -4,12 +4,13 @@
 #include <limits.h>
 #include "string.h"
 #include "tokenizer.h"
+#include "parser.h"
 
-string read_input() {
+char* read_input() {
     int pos = 0;
     int capacity = INIT_CAPACITY;
 
-    string buffer = malloc(INIT_CAPACITY * sizeof(char));
+    char *buffer = malloc(INIT_CAPACITY * sizeof(char));
 
     if (!buffer) {
         perror("Allocation error");
@@ -49,15 +50,21 @@ int main() {
             printf("\033[1;34m%s\033[0m> ", cwd);
         }
 
-        string input = read_input();
+        char *input = read_input();
 
-        Tokens tokens = tokenize(input);
+        Token *tokens = tokenize(input);
+        Token *current_token = tokens;
+        ASTNode *ast = parse_expression(&current_token);
+        char *round_trip = ast_to_string(ast);
 
-        for (int i = 0; i < tokens.count; i++) {
-            printf("%s: %s\n", token_type_to_string(tokens.tokens[i]->type), tokens.tokens[i]->argv);
+        if (round_trip) {
+            printf("%s\n", round_trip);
         }
 
-        free_tokens(&tokens);
+        free(round_trip);
+        free_ast(ast);
+        free_tokens(tokens);
+        free(input);
     }
 
     return 0;

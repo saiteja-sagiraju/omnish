@@ -18,15 +18,13 @@ static bool is_metachar(char c) {
     return c == '|' || c == '<' || c == '>' || c == '&' || c == ';';
 }
 
-Tokens tokenize(string command) {
-    Tokens result;
-    result.count = 0;
-
+Token *tokenize(char *command) {
+    int index = 0;
     int token_capacity = INIT_CAPACITY;
-    result.tokens = malloc(token_capacity * sizeof(Token*));
+    Token *tokens = malloc(token_capacity * sizeof(Token));
 
     int capacity = INIT_CAPACITY;
-    string buffer = malloc(capacity * sizeof(char));
+    char *buffer = malloc(capacity * sizeof(char));
 
     int i = 0;
 
@@ -37,48 +35,48 @@ Tokens tokenize(string command) {
 
         if (command[i] == '\0') break;
 
-        Token *token = malloc(sizeof(Token));
+        Token token = {0};
         int pos = 0;
 
         if (is_metachar(command[i])) {
             if (command[i] == '|') {
                 if (command[i + 1] == '|') {
-                    token->type = SEQ;
-                    token->argv = str_dup("||");
+                    token.type = OR;
+                    token.argv = str_dup("||");
                     i += 2;
                 } else {
-                    token->type = PIPE;
-                    token->argv = str_dup("|");
+                    token.type = PIPE;
+                    token.argv = str_dup("|");
                     i++;
                 }
             } else if (command[i] == '&' && command[i + 1] == '&') {
-                token->type = SEQ;
-                token->argv = str_dup("&&");
+                token.type = AND;
+                token.argv = str_dup("&&");
                 i += 2;
             } else if (command[i] == '>') {
                 if (command[i + 1] == '>') {
-                    token->type = APPEND;
-                    token->argv = str_dup(">>");
+                    token.type = APPEND;
+                    token.argv = str_dup(">>");
                     i += 2;
                 } else {
-                    token->type = REDIR_OUT;
-                    token->argv = str_dup(">");
+                    token.type = REDIR_OUT;
+                    token.argv = str_dup(">");
                     i++;
                 }
             } else if (command[i] == '<') {
-                token->type = REDIR_IN;
-                token->argv = str_dup("<");
+                token.type = REDIR_IN;
+                token.argv = str_dup("<");
                 i++;
             } else {
-                token->type = SEQ;
+                token.type = SEQ;
                 buffer[0] = command[i++];
                 buffer[1] = '\0';
-                token->argv = str_dup(buffer);
+                token.argv = str_dup(buffer);
             }
         }
 
         else {
-            token->type = WORD;
+            token.type = WORD;
             bool in_single_quote = false;
             bool in_double_quote = false;
 
@@ -109,42 +107,41 @@ Tokens tokenize(string command) {
             }
 
             buffer[pos++] = '\0';
-            token->argv = str_dup(buffer);
+            token.argv = str_dup(buffer);
         }
 
-        if (result.count >= token_capacity) {
+        if (index >= token_capacity) {
             token_capacity *= 2;
-            result.tokens = realloc(result.tokens, token_capacity * sizeof(Token*));
+            tokens = realloc(tokens, token_capacity * sizeof(Token));
         }
 
-        result.tokens[result.count++] = token;
-
+        tokens[index++] = token;
     }
 
-    Token *end_token = malloc(sizeof(Token));
-    end_token->type = END;
-    end_token->argv = str_dup("");
+    Token end_token = {0};
+    end_token.type = END;
+    end_token.argv = str_dup("");
 
-    if (result.count >= token_capacity) {
+    if (index >= token_capacity) {
         token_capacity += 1;
-        result.tokens = realloc(result.tokens, token_capacity * sizeof(Token*));
+        tokens = realloc(tokens, token_capacity * sizeof(Token));
     }
-    result.tokens[result.count++] = end_token;
+    tokens[index++] = end_token;
 
     free(buffer);
 
-    return result;
+    return tokens;
 }
 
-void free_tokens(Tokens *tokens) {
-    if (!tokens->tokens) return;
+void free_tokens(Token *tokens) {
+    if (!tokens) return;
 
-    for (int i = 0; i < tokens->count; i++) {
-        free(tokens->tokens[i]->argv);
-        free(tokens->tokens[i]);
+    int i = 0;
+    while (tokens[i].type != END) {
+        free(tokens[i].argv);
+        i++;
     }
-    free(tokens->tokens);
 
-    tokens->tokens = NULL;
-    tokens->count = 0;
+    free(tokens[i].argv);
+    free(tokens);
 }

@@ -1,10 +1,15 @@
+#ifndef TOKENIZER_H
+#define TOKENIZER_H
+
 #include "string.h"
 
 #define INIT_CAPACITY 16
 
 typedef enum {
     WORD,
-    SEQ, // &&
+    SEQ,
+    AND,
+    OR,
     PIPE, // |
     REDIR_IN, // <
     REDIR_OUT, // >
@@ -15,16 +20,13 @@ typedef enum {
 
 typedef struct Token {
     TokenType type;
-    string argv;
+    char *argv;
 } Token;
 
-typedef struct Tokens {
-    Token **tokens;
-    int count;
-} Tokens;
-
-Tokens tokenize(string command);
+Token *tokenize(char *command);
 
 const char* token_type_to_string(TokenType type);
 
-void free_tokens(Tokens *tokens);
+void free_tokens(Token *tokens);
+
+#endif

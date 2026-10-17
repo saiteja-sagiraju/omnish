@@ -1,8 +1,11 @@
+#ifndef STRING_H
+#define STRING_H
+
 #include <stdbool.h>
 
-typedef char* string;
+bool str_compare(const char *s1, const char *s2);
+void str_copy(char *dest, const char *src);
+int str_len(const char *str);
+char* str_dup(const char *src);
 
-bool str_compare(string s1, string s2);
-void str_copy(string dest, const string src);
-int str_len(string str);
-string str_dup(string src);
+#endif
