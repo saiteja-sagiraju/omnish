@@ -13,6 +13,9 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+test: all
+	./tests/test_shell.sh
+
 clean:
 	rm -f $(OBJS) $(TARGET)
 
