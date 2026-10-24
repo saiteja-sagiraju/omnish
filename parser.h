@@ -34,7 +34,7 @@ typedef struct ASTNode {
         struct {
             struct ASTNode *child;
             char *file;
-            int mode;
+            TokenType mode;
         } redirect;
     };
 } ASTNode;

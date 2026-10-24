@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g -I.
 TARGET = compiled/omnish
-SRCS = main.c string.c tokenizer.c parser.c
+SRCS = main.c string.c tokenizer.c parser.c executor.c
 OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)

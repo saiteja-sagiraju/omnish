@@ -5,6 +5,7 @@
 #include "string.h"
 #include "tokenizer.h"
 #include "parser.h"
+#include "executor.h"
 
 char* read_input() {
     int pos = 0;
@@ -20,7 +21,16 @@ char* read_input() {
     while (1) {
         int c = fgetc(stdin);
 
-        if (c == EOF || c == '\n') {
+        if (c == EOF) {
+            if (pos == 0) {
+                free(buffer);
+                return NULL;
+            }
+            buffer[pos] = '\0';
+            return buffer;
+        }
+
+        if (c == '\n') {
             buffer[pos] = '\0';
             return buffer;
         }
@@ -51,17 +61,26 @@ int main() {
         }
 
         char *input = read_input();
+        if (!input) {
+            putchar('\n');
+            break;
+        }
+
+        if (input[0] == '\0') {
+            free(input);
+            continue;
+        }
 
         Token *tokens = tokenize(input);
         Token *current_token = tokens;
         ASTNode *ast = parse_expression(&current_token);
-        char *round_trip = ast_to_string(ast);
 
-        if (round_trip) {
-            printf("%s\n", round_trip);
+        int exec_status = execute_ast(ast);
+
+        if (exec_status < 0) {
+            perror("execute_ast");
         }
 
-        free(round_trip);
         free_ast(ast);
         free_tokens(tokens);
         free(input);
