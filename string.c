@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include "string.h"
-#include <stdlib.h>
 
 bool str_compare(const char *s1, const char *s2) {
     int i = 0;

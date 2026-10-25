@@ -4,6 +4,10 @@
 #include "string.h"
 #include "tokenizer.h"
 
+#include <stdlib.h>
+
+#define MAX_ARGS 64
+
 typedef enum {
     NODE_COMMAND,
     NODE_PIPE,

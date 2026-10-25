@@ -1,12 +1,6 @@
 #include "executor.h"
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <fcntl.h>
 
-int execute_ast(ASTNode *node) {
+int execute_ast(ASTNode *node, History *history) {
     if (!node) return 0;
 
     switch (node->type) {
@@ -16,6 +10,11 @@ int execute_ast(ASTNode *node) {
             if (str_compare(node->command.argv[0], "cd")) {
                 int changed = chdir(node->command.argv[1]);
                 if (changed < 0) perror(node->command.argv[1]);
+                return 0;
+            }
+
+            if (str_compare(node->command.argv[0], "history")) {
+                print_history(history);
                 return 0;
             }
 
@@ -40,7 +39,7 @@ int execute_ast(ASTNode *node) {
                 close(fd[0]);
                 dup2(fd[1], STDOUT_FILENO);
                 close(fd[1]);
-                exit(execute_ast(node->pipe.left));
+                exit(execute_ast(node->pipe.left, history));
             }
 
             // read from pipe
@@ -48,7 +47,7 @@ int execute_ast(ASTNode *node) {
                 close(fd[1]);
                 dup2(fd[0], STDIN_FILENO);
                 close(fd[0]);
-                exit(execute_ast(node->pipe.right));
+                exit(execute_ast(node->pipe.right, history));
             }
 
             close(fd[0]);
@@ -84,7 +83,7 @@ int execute_ast(ASTNode *node) {
             dup2(fd, target_std);
             close(fd);
 
-            int status = execute_ast(node->redirect.child);
+            int status = execute_ast(node->redirect.child, history);
 
             dup2(saved_std, target_std);
             close(saved_std);
@@ -94,21 +93,21 @@ int execute_ast(ASTNode *node) {
         }
 
         case NODE_AND: {
-            int left_status = execute_ast(node->logical.left);
+            int left_status = execute_ast(node->logical.left, history);
 
             if (left_status == 0) {
-                return execute_ast(node->logical.right);
+                return execute_ast(node->logical.right, history);
             }
 
             return left_status;
         }
 
         case NODE_OR: {
-            int left_status = execute_ast(node->logical.left);
+            int left_status = execute_ast(node->logical.left, history);
 
             if (left_status == 0) return 0;
 
-            return execute_ast(node->logical.right);
+            return execute_ast(node->logical.right, history);
         }
 
     }

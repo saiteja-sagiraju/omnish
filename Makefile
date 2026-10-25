@@ -1,13 +1,12 @@
 CC = gcc
 CFLAGS = -Wall -g -I.
-TARGET = compiled/omnish
-SRCS = main.c string.c tokenizer.c parser.c executor.c
+TARGET = omnish
+SRCS = main.c string.c tokenizer.c parser.c executor.c history.c
 OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	@mkdir -p compiled
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.c

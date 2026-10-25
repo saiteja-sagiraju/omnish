@@ -13,7 +13,43 @@ trap cleanup EXIT
 make -C "$ROOT" >/dev/null
 
 run_shell() {
-    printf '%s\n' "$1" | "$SHELL_BIN" 2>&1
+    OMNISH_COMMAND="$1" SHELL_BIN="$SHELL_BIN" python3 - <<'PY'
+import os
+import signal
+import subprocess
+import sys
+import time
+
+process = subprocess.Popen(
+    ["script", "-qefc", os.environ["SHELL_BIN"], "/dev/null"],
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+)
+
+time.sleep(0.2)
+output = bytearray()
+process.stdin.write(os.environ["OMNISH_COMMAND"].encode() + b"\n")
+process.stdin.flush()
+time.sleep(1)
+
+process.send_signal(signal.SIGTERM)
+
+try:
+    process.wait(timeout=5)
+except subprocess.TimeoutExpired:
+    process.kill()
+    output = process.stdout.read()
+    sys.stderr.buffer.write(output)
+    raise SystemExit("timed out waiting for shell to exit")
+
+output.extend(process.stdout.read())
+if process.returncode not in (0, 130):
+    sys.stderr.buffer.write(output)
+    raise SystemExit(1)
+
+sys.stdout.buffer.write(output)
+PY
 }
 
 assert_contains() {
@@ -69,7 +105,7 @@ output="$(run_shell 'true && echo success')"
 assert_contains "$output" "success"
 
 output="$(run_shell 'false && echo should-not-run')"
-if grep -Fq "should-not-run" <<< "$output"; then
+if grep -Fxq "should-not-run" <<< "$output"; then
     echo "FAIL: false && command ran"
     exit 1
 fi
@@ -79,13 +115,13 @@ output="$(run_shell 'false || echo fallback')"
 assert_contains "$output" "fallback"
 
 output="$(run_shell 'true || echo should-not-run')"
-if grep -Fq "should-not-run" <<< "$output"; then
+if grep -Fxq "should-not-run" <<< "$output"; then
     echo "FAIL: true || command ran"
     exit 1
 fi
 
 echo "Testing EOF handling..."
-output="$(printf 'echo eof-test\n' | "$SHELL_BIN" 2>&1)"
+output="$(run_shell 'echo eof-test')"
 assert_contains "$output" "eof-test"
 
 echo "All tests passed."

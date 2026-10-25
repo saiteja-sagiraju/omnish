@@ -1,9 +1,5 @@
 #include "parser.h"
 
-#include <stdlib.h>
-
-#define MAX_ARGS 64
-
 ASTNode *parse_expression(Token **tokens) {
     ASTNode *left = parse_pipe(tokens);
 

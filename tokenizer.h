@@ -2,8 +2,9 @@
 #define TOKENIZER_H
 
 #include "string.h"
+#include <stdlib.h>
 
-#define INIT_CAPACITY 16
+#define INIT_CAPACITY 128
 
 typedef enum {
     WORD,

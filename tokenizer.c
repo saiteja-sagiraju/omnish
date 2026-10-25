@@ -1,5 +1,4 @@
 #include "tokenizer.h"
-#include <stdlib.h>
 
 const char* token_type_to_string(TokenType type) {
     switch (type) {
